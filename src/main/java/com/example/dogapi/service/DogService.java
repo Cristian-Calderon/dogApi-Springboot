@@ -1,6 +1,8 @@
 package com.example.dogapi.service;
 
 import com.example.dogapi.model.DogImage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -8,18 +10,32 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-// La anotacion @Service indica a Spring que esta clase es un "servicio" y debe ser gestionada
-// (inyectada con @Autowired)
 public class DogService {
 
-    private final String API_URL = "https://api.thedogapi.com/v1/images/search?limit=10";
+    private final String API_URL = "https://api.thedogapi.com/v1/images/search?limit=3";
+
+    @Value("${thedogapi.key}")
+    private String apikey;
 
     public List<DogImage> getDogImages() {
-// RestTemplate = se usa para hacer una peticion HTTP GET a la api
         RestTemplate restTemplate = new RestTemplate();
-// getForObject () Hace la llamada y espera que la respuesta sea un array de DogImage
-        DogImage[] response = restTemplate.getForObject(API_URL, DogImage[].class);
-        return Arrays.asList(response);
-    }
 
+        // Agregamos los headers con la API KEY
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x-api-key", apikey);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<DogImage[]> response = restTemplate.exchange(
+                API_URL,
+                HttpMethod.GET,
+                entity,
+                DogImage[].class
+        );
+
+        DogImage[] dogs = response.getBody();
+
+        System.out.println("Imágenes recibidas: " + dogs.length);
+        return Arrays.asList(dogs);
+    }
 }
